@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import Archive from '../../components/Archive.astro';
+import { getArticles } from '../../lib/content';
+
+const articles = await getArticles();
+---
+
+<Base title="All Articles" description="Every note on Read, Game, Write – books, games and loose thoughts.">
+  <Archive title="ALL ARTICLES" articles={articles} />
+</Base>

@@ -1,0 +1,713 @@
+---
+import { TYPES, type ArticleType } from '../config';
+import { img } from '../lib/content';
+import { archiveDate, year } from '../lib/format';
+import type { Article } from '../lib/types';
+import searchSm from '../assets/figma/search-sm.svg';
+import sliders from '../assets/figma/sliders.svg';
+import arrowUpDown from '../assets/figma/arrow-up-down.svg';
+import chevronDown from '../assets/figma/chevron-down.svg';
+import arrowDown from '../assets/figma/arrow-down.svg';
+
+interface Props {
+  title: string;
+  articles: Article[];
+  /** When set, the page only lists this type (Books / Games pages). */
+  fixedType?: ArticleType;
+  /** Noun used in the counter and the "load more" button. */
+  noun?: string;
+  /** Width of the hover-image slot at the right of each row. */
+  thumbWidth?: number;
+}
+
+const { title, articles, fixedType, noun = 'articles', thumbWidth = 120 } = Astro.props;
+
+const years = [...new Set(articles.map((a) => year(a.date)))].sort((a, b) => b - a);
+const typeOrder: ArticleType[] = ['books', 'games', 'essay'];
+const presentTypes = typeOrder.filter((t) => articles.some((a) => a.type === t));
+
+// Server-rendered fallback = "Chronological" view with a separator when the year changes.
+const items: ({ sep: number } | { a: Article })[] = [];
+articles.forEach((a, i) => {
+  if (i > 0 && year(a.date) !== year(articles[i - 1].date)) items.push({ sep: year(a.date) });
+  items.push({ a });
+});
+---
+
+<div class="archive" data-archive data-fixed-type={fixedType ?? ''} data-noun={noun} data-page-size="10" style={`--slot:${thumbWidth}px`}>
+  <div class="head">
+    <h1>{title}</h1>
+    <p class="count" aria-live="polite"><span data-count>{articles.length} {noun.toUpperCase()}</span></p>
+  </div>
+
+  <div class="controls">
+    <div class="tabs" role="group" aria-label="View">
+      <button type="button" class="pill on" data-view="chrono" aria-pressed="true">Chronological</button>
+      {!fixedType && <button type="button" class="pill" data-view="type" aria-pressed="false">By Type</button>}
+      <button type="button" class="pill" data-view="year" aria-pressed="false">By Year</button>
+    </div>
+    <div class="tools">
+      <label class="search" for="archive-search">
+        <img class="icon" src={searchSm.src} width="14" height="14" alt="" />
+        <input id="archive-search" type="search" placeholder="Search articles..." autocomplete="off" data-search />
+      </label>
+      <button type="button" class="outline" data-filter-toggle aria-expanded="true" aria-controls="archive-filters">
+        <img class="icon" src={sliders.src} width="14" height="14" alt="" />
+        <span>Filter</span>
+      </button>
+      <button type="button" class="outline" data-sort>
+        <img class="icon" src={arrowUpDown.src} width="14" height="14" alt="" />
+        <span>Sort: <span data-sort-label>Newest</span></span>
+        <img class="icon" src={chevronDown.src} width="12" height="12" alt="" />
+      </button>
+    </div>
+  </div>
+
+  <div class="showing" id="archive-filters" data-filters>
+    <span class="lbl">SHOWING:</span>
+    {
+      fixedType ? (
+        <span class="fchip on">{TYPES[fixedType].label}</span>
+      ) : (
+        <>
+          <button type="button" class="fchip on" data-type-chip="all" aria-pressed="true">All Types</button>
+          {presentTypes.map((t) => (
+            <button type="button" class="fchip" data-type-chip={t} aria-pressed="false">{TYPES[t].label}</button>
+          ))}
+        </>
+      )
+    }
+    <span class="gap" aria-hidden="true"></span>
+    {
+      years.map((y) => (
+        <button type="button" class="fchip" data-year-chip={y} aria-pressed="false">
+          {y}<span class="x" aria-hidden="true"> ×</span>
+        </button>
+      ))
+    }
+    <button type="button" class="clear" data-clear>Clear all</button>
+  </div>
+
+  <div class="cols" aria-hidden="true">
+    <span class="c-date">DATE</span>
+    <span class="c-type">TYPE</span>
+    <span class="c-title">TITLE</span>
+    <span class="c-min">READ</span>
+    <span class="c-slot"></span>
+  </div>
+
+  <ol class="list" data-list>
+    {
+      items.map((it) =>
+        'sep' in it ? (
+          <li class="sep" data-sep><span>{it.sep}</span><i></i></li>
+        ) : (
+          <li
+            class="row"
+            data-row
+            data-type={it.a.type}
+            data-year={year(it.a.date)}
+            data-ts={it.a.date.replace(/-/g, '')}
+            data-q={[it.a.title, it.a.summary, it.a.tags.join(' '), TYPES[it.a.type].label].join(' ').toLowerCase()}
+          >
+            <a href={`/articles/${it.a.slug}/`}>
+              <span class="date">{archiveDate(it.a.date)}</span>
+              <span class="badge">{TYPES[it.a.type].label}</span>
+              <span class="story">
+                <span class="r-title">{it.a.title}</span>
+                {it.a.summary && <span class="r-summary">{it.a.summary}</span>}
+              </span>
+              <span class="mins">{it.a.minutes} min</span>
+              <span class="thumb" aria-hidden="true">
+                {it.a.cover && (
+                  <img
+                    src={img(it.a.cover.url, 360)}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    class:list={{ portrait: it.a.type === 'books' }}
+                    style={it.a.cover.position ? `object-position:${it.a.cover.position}` : undefined}
+                  />
+                )}
+              </span>
+            </a>
+          </li>
+        ),
+      )
+    }
+  </ol>
+
+  <p class="empty" data-empty hidden>No articles match your filters.</p>
+
+  <div class="more">
+    <button type="button" class="outline big" data-more hidden>
+      <span>Load more {noun}</span>
+      <img class="icon" src={arrowDown.src} width="14" height="14" alt="" />
+    </button>
+  </div>
+</div>
+
+<style>
+  .archive {
+    --gutter: var(--pad);
+  }
+
+  /* header */
+  .head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 64px var(--gutter);
+  }
+  h1 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.15;
+    color: var(--ink);
+  }
+  .count {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 28px var(--gutter);
+    border-bottom: 1px solid var(--line);
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+  }
+  .pill {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--chip);
+    color: var(--ink);
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .pill.on {
+    background: var(--btn);
+    color: var(--btn-ink);
+    font-weight: 600;
+  }
+  .tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 220px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--chip);
+    cursor: text;
+  }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: none;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--ink);
+  }
+  .search input::placeholder {
+    color: var(--faint);
+  }
+  .search:focus-within {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+  .search input::-webkit-search-cancel-button {
+    display: none;
+  }
+  .outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--muted-2);
+    white-space: nowrap;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .outline:hover {
+    border-color: var(--muted);
+    color: var(--ink);
+  }
+
+  /* active filters */
+  .showing {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 14px var(--gutter);
+    border-bottom: 1px solid var(--line);
+  }
+  .lbl {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .fchip {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--chip);
+    color: var(--ink);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  .fchip.on {
+    background: var(--btn);
+    color: var(--btn-ink);
+  }
+  .fchip .x {
+    display: none;
+    color: var(--muted);
+  }
+  .fchip.on .x {
+    display: inline;
+    color: inherit;
+    opacity: 0.7;
+  }
+  .gap {
+    width: 1px;
+    height: 14px;
+    margin: 0 4px;
+    background: var(--line);
+  }
+  .clear {
+    font-size: 11px;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .clear:hover {
+    color: var(--ink);
+  }
+
+  /* column headers */
+  .cols {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 40px;
+    padding: 0 var(--gutter);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--faint);
+  }
+  .c-date {
+    width: 150px;
+    flex: none;
+  }
+  .c-type {
+    width: 110px;
+    flex: none;
+  }
+  .c-title {
+    flex: 1;
+    min-width: 0;
+  }
+  .c-min {
+    width: 80px;
+    flex: none;
+    text-align: right;
+  }
+  .c-slot {
+    width: var(--slot);
+    flex: none;
+  }
+
+  /* list */
+  .list {
+    margin: 0 var(--gutter);
+    border-bottom: 1px solid var(--line);
+  }
+  .row {
+    border-top: 1px solid var(--line);
+  }
+  .row a {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 24px 16px;
+    margin: 0 -16px;
+    border-radius: 2px;
+    transition: background 0.15s;
+  }
+  .row a:hover,
+  .row a:focus-visible {
+    background: var(--bg-alt);
+  }
+  .date {
+    width: 150px;
+    flex: none;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .badge {
+    display: inline-block;
+    width: 110px;
+    flex: none;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1.2;
+    color: var(--muted-2);
+  }
+  .story {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .r-title {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.35;
+    color: var(--ink);
+  }
+  .r-summary {
+    font-family: var(--font-serif);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .mins {
+    width: 80px;
+    flex: none;
+    text-align: right;
+    font-size: 12px;
+    color: var(--faint);
+  }
+  .thumb {
+    flex: none;
+    width: var(--slot);
+    height: 80px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .thumb img {
+    height: 80px;
+    width: 120px;
+    object-fit: cover;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .thumb img.portrait {
+    width: 60px;
+    border-radius: 3px;
+  }
+  .row a:hover .thumb img,
+  .row a:focus-visible .thumb img {
+    opacity: 1;
+  }
+
+  /* hover state: yellow badge like the design */
+  .badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: var(--chip);
+    color: var(--muted-2);
+    box-sizing: border-box;
+    transition: background 0.15s, color 0.15s;
+  }
+  .row a:hover .badge,
+  .row a:focus-visible .badge {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  /* JS re-creates separators, so these rules must not be scoped. */
+  .list :global(.sep) {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 32px 0 16px;
+    border-top: 1px solid var(--line);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--faint);
+  }
+  .list :global(.sep i) {
+    display: block;
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .empty {
+    padding: 56px var(--gutter);
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .more {
+    display: flex;
+    justify-content: center;
+    padding: 48px var(--gutter) 100px;
+  }
+  .big {
+    padding: 12px 32px;
+    font-size: 13px;
+    color: var(--ink);
+  }
+
+  @media (max-width: 900px) {
+    .head {
+      padding: 40px var(--gutter);
+    }
+    .controls {
+      padding: 20px var(--gutter);
+    }
+    .tools {
+      width: 100%;
+    }
+    .search {
+      flex: 1 1 200px;
+      width: auto;
+    }
+    .cols {
+      display: none;
+    }
+    .list {
+      margin-top: 8px;
+    }
+    .row a {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      grid-template-areas:
+        'badge date mins'
+        'story story story';
+      column-gap: 12px;
+      row-gap: 10px;
+      align-items: center;
+      padding: 20px 12px;
+      margin: 0 -12px;
+    }
+    .badge {
+      grid-area: badge;
+      width: auto;
+    }
+    .date {
+      grid-area: date;
+      width: auto;
+    }
+    .mins {
+      grid-area: mins;
+      width: auto;
+    }
+    .story {
+      grid-area: story;
+    }
+    .thumb {
+      display: none;
+    }
+    .r-title {
+      font-size: 19px;
+    }
+    .more {
+      padding-bottom: 64px;
+    }
+  }
+</style>
+
+<script>
+  type Row = { el: HTMLElement; type: string; year: string; ts: number; q: string };
+
+  const root = document.querySelector<HTMLElement>('[data-archive]');
+  if (root) init(root);
+
+  function init(root: HTMLElement) {
+    const list = root.querySelector<HTMLElement>('[data-list]')!;
+    const rows: Row[] = Array.from(list.querySelectorAll<HTMLElement>('[data-row]')).map((el) => ({
+      el,
+      type: el.dataset.type ?? '',
+      year: el.dataset.year ?? '',
+      ts: Number(el.dataset.ts ?? 0),
+      q: el.dataset.q ?? '',
+    }));
+
+    const pageSize = Number(root.dataset.pageSize ?? 10);
+    const noun = root.dataset.noun ?? 'articles';
+    const fixedType = root.dataset.fixedType ?? '';
+    const typeOrder = ['books', 'games', 'essay'];
+
+    const state = {
+      view: 'chrono' as 'chrono' | 'type' | 'year',
+      type: fixedType || 'all',
+      years: new Set<string>(),
+      q: '',
+      sort: 'new' as 'new' | 'old',
+      limit: pageSize,
+    };
+
+    const $ = <T extends HTMLElement>(s: string) => root.querySelector<T>(s);
+    const $$ = <T extends HTMLElement>(s: string) => Array.from(root.querySelectorAll<T>(s));
+    const countEl = $('[data-count]')!;
+    const emptyEl = $('[data-empty]')!;
+    const moreBtn = $<HTMLButtonElement>('[data-more]')!;
+    const searchInput = $<HTMLInputElement>('[data-search]')!;
+    const sortLabel = $('[data-sort-label]')!;
+    const filters = $('[data-filters]')!;
+    const filterToggle = $<HTMLButtonElement>('[data-filter-toggle]')!;
+
+    const labelFor = (v: string, first: boolean) => {
+      if (state.view === 'type') return v.charAt(0).toUpperCase() + v.slice(1);
+      return state.view === 'year' || !first ? v : '';
+    };
+
+    function render() {
+      list.querySelectorAll('[data-sep]').forEach((n) => n.remove());
+
+      const q = state.q.trim().toLowerCase();
+      const dir = state.sort === 'new' ? -1 : 1;
+      const matches = rows.filter(
+        (r) =>
+          (state.type === 'all' || r.type === state.type) &&
+          (state.years.size === 0 || state.years.has(r.year)) &&
+          (!q || q.split(/\s+/).every((w) => r.q.includes(w))),
+      );
+
+      matches.sort((a, b) => {
+        if (state.view === 'type') {
+          const d = typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
+          if (d) return d;
+        } else if (state.view === 'year') {
+          const d = Number(a.year) - Number(b.year);
+          if (d) return d * dir;
+        }
+        return (a.ts - b.ts) * dir;
+      });
+
+      const shown = matches.slice(0, state.limit);
+      const shownSet = new Set(shown);
+      rows.forEach((r) => (r.el.hidden = !shownSet.has(r)));
+
+      // Re-insert rows in order, with group separators.
+      let last = '';
+      shown.forEach((r, i) => {
+        const key = state.view === 'type' ? r.type : state.view === 'year' ? r.year : r.year;
+        if (key !== last) {
+          const label = state.view === 'chrono' ? (i === 0 ? '' : r.year) : labelFor(key, i === 0);
+          if (label) {
+            const sep = document.createElement('li');
+            sep.className = 'sep';
+            sep.dataset.sep = '';
+            sep.innerHTML = `<span></span><i></i>`;
+            sep.querySelector('span')!.textContent = label;
+            list.append(sep);
+          }
+          last = key;
+        }
+        list.append(r.el);
+      });
+      // keep hidden rows at the end so the DOM order stays tidy
+      rows.filter((r) => r.el.hidden).forEach((r) => list.append(r.el));
+
+      countEl.textContent = `${matches.length} ${noun.toUpperCase()}`;
+      emptyEl.hidden = matches.length > 0;
+      moreBtn.hidden = matches.length <= shown.length;
+
+      $$('[data-view]').forEach((b) => {
+        const on = b.dataset.view === state.view;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      $$('[data-type-chip]').forEach((b) => {
+        const on = b.dataset.typeChip === state.type;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      $$('[data-year-chip]').forEach((b) => {
+        const on = state.years.has(b.dataset.yearChip ?? '');
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      sortLabel.textContent = state.sort === 'new' ? 'Newest' : 'Oldest';
+    }
+
+    const reset = () => {
+      state.limit = pageSize;
+      render();
+    };
+
+    $$('[data-view]').forEach((b) =>
+      b.addEventListener('click', () => {
+        state.view = b.dataset.view as typeof state.view;
+        reset();
+      }),
+    );
+    $$('[data-type-chip]').forEach((b) =>
+      b.addEventListener('click', () => {
+        state.type = b.dataset.typeChip ?? 'all';
+        reset();
+      }),
+    );
+    $$('[data-year-chip]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const y = b.dataset.yearChip ?? '';
+        state.years.has(y) ? state.years.delete(y) : state.years.add(y);
+        reset();
+      }),
+    );
+    $('[data-clear]')?.addEventListener('click', () => {
+      state.type = fixedType || 'all';
+      state.years.clear();
+      state.q = '';
+      searchInput.value = '';
+      reset();
+    });
+    $('[data-sort]')?.addEventListener('click', () => {
+      state.sort = state.sort === 'new' ? 'old' : 'new';
+      reset();
+    });
+    moreBtn.addEventListener('click', () => {
+      state.limit += pageSize;
+      render();
+    });
+    filterToggle.addEventListener('click', () => {
+      const open = filterToggle.getAttribute('aria-expanded') === 'true';
+      filterToggle.setAttribute('aria-expanded', String(!open));
+      filters.hidden = open;
+    });
+    searchInput.addEventListener('input', () => {
+      state.q = searchInput.value;
+      reset();
+    });
+
+    // Deep links: /articles/?q=word and /articles/#search (nav search icon)
+    const qParam = new URLSearchParams(location.search).get('q');
+    if (qParam) {
+      searchInput.value = qParam;
+      state.q = qParam;
+    }
+    if (location.hash === '#search') searchInput.focus();
+
+    render();
+  }
+</script>

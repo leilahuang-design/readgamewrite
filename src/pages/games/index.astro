@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import Archive from '../../components/Archive.astro';
+import { getArticles } from '../../lib/content';
+
+const articles = (await getArticles()).filter((a) => a.type === 'games');
+---
+
+<Base title="All Games" description="All games notes on Read, Game, Write.">
+  <Archive title="ALL GAMES" articles={articles} fixedType="games" noun="games" thumbWidth={120} />
+</Base>

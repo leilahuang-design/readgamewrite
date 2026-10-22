@@ -1,0 +1,88 @@
+---
+import { SITE } from '../config';
+
+interface Props {
+  instagramUrl?: string;
+  threadsUrl?: string;
+}
+const { instagramUrl, threadsUrl } = Astro.props;
+const links = [
+  instagramUrl && { label: 'Instagram', href: instagramUrl, external: true },
+  threadsUrl && { label: 'Threads', href: threadsUrl, external: true },
+  { label: 'RSS', href: '/rss.xml', external: false },
+].filter(Boolean) as { label: string; href: string; external: boolean }[];
+---
+
+<footer class="closing">
+  <div class="inner">
+    <hr />
+    <div class="row">
+      <p>© {SITE.year} {SITE.copyrightName}</p>
+      <ul>
+        {
+          links.map((l) => (
+            <li>
+              <a href={l.href} {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                {l.label}
+              </a>
+            </li>
+          ))
+        }
+        <li><a href="#main" data-top>Top</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .closing {
+    background: var(--bg);
+  }
+  .inner {
+    padding: 72px var(--pad) 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+  hr {
+    margin: 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+  }
+  .row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  ul {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  a:hover {
+    color: var(--ink);
+  }
+  @media (max-width: 640px) {
+    .inner {
+      padding-top: 48px;
+      gap: 32px;
+    }
+    .row {
+      flex-direction: column;
+    }
+    ul {
+      justify-content: flex-start;
+    }
+  }
+</style>
+
+<script>
+  document.querySelector('[data-top]')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0 });
+  });
+</script>

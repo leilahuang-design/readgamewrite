@@ -1,0 +1,65 @@
+---
+import Base from '../layouts/Base.astro';
+import NewsletterCallout from '../components/NewsletterCallout.astro';
+import { getSettings } from '../lib/content';
+import { SITE } from '../config';
+
+const s = await getSettings();
+const lines = s.aboutHeadline.split('\n').filter(Boolean);
+---
+
+<Base title="About" description={s.aboutIntro}>
+  <section class="intro">
+    <div class="statement">
+      <p class="eyebrow">{s.aboutEyebrow}</p>
+      <h1>
+        {lines.map((l) => <span>{l}</span>)}
+      </h1>
+      <p class="lead">{s.aboutIntro}</p>
+    </div>
+  </section>
+  {SITE.newsletterEnabled && <div class="callout-wrap"><NewsletterCallout /></div>}
+</Base>
+
+<style>
+  .intro {
+    padding: 88px var(--pad) 100px;
+  }
+  .statement {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-items: flex-start;
+  }
+  .eyebrow {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--ink);
+  }
+  h1 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: clamp(34px, 5.6vw, 58px);
+    line-height: 1.24;
+    color: var(--ink);
+  }
+  h1 span {
+    display: block;
+  }
+  .lead {
+    max-width: 880px;
+    font-family: var(--font-serif);
+    font-size: clamp(16px, 1.8vw, 18px);
+    line-height: 1.9;
+    color: var(--muted);
+  }
+  .callout-wrap {
+    padding: 0 var(--pad);
+  }
+  @media (max-width: 640px) {
+    .intro {
+      padding-top: 48px;
+      padding-bottom: 64px;
+    }
+  }
+</style>

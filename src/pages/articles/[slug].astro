@@ -1,0 +1,198 @@
+---
+import Base from '../../layouts/Base.astro';
+import { TYPES } from '../../config';
+import { getArticles, img } from '../../lib/content';
+import { issueLabel, longDate } from '../../lib/format';
+
+export async function getStaticPaths() {
+  const articles = await getArticles();
+  return articles.map((article, i) => ({
+    params: { slug: article.slug },
+    props: { article, newer: articles[i - 1], older: articles[i + 1] },
+  }));
+}
+
+const { article: a, newer, older } = Astro.props;
+const portrait = a.type === 'books';
+---
+
+<Base
+  title={a.title}
+  description={a.summary || undefined}
+  image={a.cover ? img(a.cover.url, 1200) : undefined}
+  type="article"
+>
+  <article class="article">
+    <header class="head">
+      <p class="meta">
+        <span class="tag" data-type={a.type}>{TYPES[a.type].label}</span>
+        <span>{longDate(a.date)}</span>
+        <span>{a.minutes} min read</span>
+        {a.issue && <span>{issueLabel(a.issue)}</span>}
+      </p>
+      <h1>{a.title}</h1>
+      {a.summary && <p class="summary">{a.summary}</p>}
+    </header>
+
+    {
+      a.cover && (
+        <figure class:list={['cover', { portrait }]}>
+          <img
+            src={img(a.cover.url, portrait ? 640 : 1400)}
+            alt={a.cover.alt}
+            style={a.cover.position ? `object-position:${a.cover.position}` : undefined}
+            decoding="async"
+          />
+        </figure>
+      )
+    }
+
+    <div class="prose" set:html={a.bodyHtml} />
+
+    {
+      a.tags.length > 0 && (
+        <ul class="chips" aria-label="Keywords">
+          {a.tags.map((t) => (
+            <li class="chip">{t}</li>
+          ))}
+        </ul>
+      )
+    }
+
+    <nav class="pager" aria-label="More articles">
+      {
+        newer ? (
+          <a href={`/articles/${newer.slug}/`}>
+            <span class="dir">← Newer</span>
+            <span class="t">{newer.title}</span>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        older ? (
+          <a class="next" href={`/articles/${older.slug}/`}>
+            <span class="dir">Older →</span>
+            <span class="t">{older.title}</span>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+    </nav>
+    <a class="back" href="/articles/">← All Articles</a>
+  </article>
+</Base>
+
+<style>
+  .article {
+    max-width: calc(720px + var(--pad) * 2);
+    margin: 0 auto;
+    padding: 72px var(--pad) 96px;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    font-size: 11px;
+    color: var(--faint-2);
+    text-transform: uppercase;
+  }
+  h1 {
+    margin-top: 24px;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: clamp(28px, 4.4vw, 44px);
+    line-height: 1.35;
+    color: var(--ink);
+  }
+  .summary {
+    margin-top: 20px;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 1.8;
+    color: var(--muted-2);
+  }
+  .cover {
+    margin: 48px 0;
+  }
+  .cover img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    background: var(--chip);
+  }
+  .cover.portrait img {
+    width: min(260px, 70%);
+    margin: 0 auto;
+  }
+  .article > .prose {
+    margin-top: 48px;
+  }
+  .cover + .prose {
+    margin-top: 0;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 56px;
+  }
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+  }
+  .pager a {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .pager .next {
+    text-align: right;
+    grid-column: 2;
+  }
+  .dir {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .t {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .pager a:hover .t {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 1px;
+  }
+  .back {
+    display: inline-block;
+    margin-top: 40px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted-2);
+  }
+  .back:hover {
+    color: var(--ink);
+  }
+  @media (max-width: 640px) {
+    .article {
+      padding-top: 40px;
+    }
+    .pager {
+      grid-template-columns: 1fr;
+    }
+    .pager .next {
+      grid-column: 1;
+      text-align: left;
+    }
+  }
+</style>
