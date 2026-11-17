@@ -43,7 +43,7 @@ Requires Node 22+.
 ## Sanity setup checklist
 
 1. https://www.sanity.io/manage → project `6l9t2gd5` → **API → CORS origins**: add
-   `http://localhost:4321`, your Cloudflare preview URL, and `https://readgamewrite.com`
+   `http://localhost:4321`, your Cloudflare preview URL, and `https://readgameandwrite.com`
    (tick **Allow credentials** for each).
 2. Open `/studio` on the live site and sign in.
 3. **API → Webhooks**: create a webhook that POSTs to the Cloudflare deploy hook URL

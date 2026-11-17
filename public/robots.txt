@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /studio
 
-Sitemap: https://readgamewrite.com/sitemap-index.xml
+Sitemap: https://readgameandwrite.com/sitemap-index.xml
