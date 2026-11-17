@@ -3,7 +3,9 @@ import { SITE } from '../config';
 import Logo from './Logo.astro';
 
 const path = Astro.url.pathname;
-const isActive = (match: string) => (match === '' ? path === '/' : path.startsWith(match));
+// Exact match only: an article page (/articles/some-post/) must not light up "All Articles".
+const norm = (p: string) => (p.length > 1 ? p.replace(/\/+$/, '') : p);
+const isActive = (match: string) => norm(path) === (match === '' ? '/' : norm(match));
 ---
 
 <header class="nav-wrap">

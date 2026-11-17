@@ -106,15 +106,7 @@ const searchText = (a: Article) => [a.title, a.summary, ...a.tags].join(' ').toL
             </div>
             {it.a.cover && (
               <div class="preview" aria-hidden="true">
-                <img
-                  src={img(it.a.cover.url, 264)}
-                  alt=""
-                  width="88"
-                  height="132"
-                  loading="lazy"
-                  decoding="async"
-                  style={it.a.cover.position ? `object-position:${it.a.cover.position}` : undefined}
-                />
+                <img src={img(it.a.cover.url, 360)} alt="" loading="lazy" decoding="async" />
               </div>
             )}
           </a>
@@ -334,10 +326,13 @@ const searchText = (a: Article) => [a.title, a.summary, ...a.tags].join(' ').toL
     width: 176px;
     height: 154px;
   }
+  /* Show the whole cover (portrait book covers and landscape screenshots alike). */
   .preview img {
-    width: 88px;
-    height: 132px;
-    object-fit: cover;
+    width: auto;
+    height: auto;
+    max-width: 168px;
+    max-height: 132px;
+    object-fit: contain;
     border-radius: 8px;
   }
   .row:hover,
