@@ -3,7 +3,7 @@
 export const SITE = {
   name: 'Read, Game, And Write',
   shortName: 'RG&W',
-  url: 'https://readgamewrite.com',
+  url: 'https://readgameandwrite.com',
   copyrightName: 'Read, Game, And Write',
   year: 2026,
   // Hero subtitle on the home page (editable in Studio).

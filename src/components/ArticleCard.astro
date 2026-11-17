@@ -27,8 +27,8 @@ const portrait = a.type === 'books';
         <img
           src={img(a.cover.url, portrait ? 360 : 540)}
           alt={a.cover.alt}
-          width={portrait ? 120 : 180}
-          height={portrait ? 180 : 120}
+          width={portrait ? 120 : 192}
+          height={portrait ? 180 : 108}
           style={a.cover.position ? `object-position:${a.cover.position}` : undefined}
           loading="lazy"
           decoding="async"
@@ -97,24 +97,22 @@ const portrait = a.type === 'books';
     color: var(--text-secondary);
   }
 
-  /* Cover stays on the right and shrinks with the card (responsive guideline). */
+  /* Cover stays on the right and shrinks with the card (responsive guideline).
+     Book covers are portrait 2:3; every other cover keeps a 16:9 frame so
+     screenshots are not cropped. */
   .cover {
     flex: none;
-    width: var(--cover-w);
-    height: var(--cover-w);
     border-radius: 4px;
     overflow: hidden;
     background: var(--surface-subtle);
   }
   .cover.portrait {
+    width: var(--cover-w);
     height: var(--cover-h);
   }
-  /* Landscape covers: square on phones, 3:2 from tablet up. */
-  @media (min-width: 640px) {
-    .cover:not(.portrait) {
-      width: calc(var(--cover-w) * 1.5);
-      height: var(--cover-w);
-    }
+  .cover:not(.portrait) {
+    width: clamp(96px, calc(96px + (100vw - 390px) * 0.0914), 192px);
+    aspect-ratio: 16 / 9;
   }
   .cover img {
     width: 100%;

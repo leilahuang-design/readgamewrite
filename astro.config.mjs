@@ -8,7 +8,7 @@ const projectId = process.env.PUBLIC_SANITY_PROJECT_ID || '6l9t2gd5';
 const dataset = process.env.PUBLIC_SANITY_DATASET || 'production';
 
 export default defineConfig({
-  site: 'https://readgamewrite.com',
+  site: 'https://readgameandwrite.com',
   output: 'static',
   // Old section pages now live inside the All Articles filters.
   redirects: {
