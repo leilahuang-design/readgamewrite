@@ -137,7 +137,7 @@ export const SAMPLE_SETTINGS: Settings = {
   aboutEyebrow: 'ABOUT',
   aboutHeadline: '在書頁與存檔點之間，\n練習更慢地看世界。',
   aboutIntro:
-    '這裡記下我讀過的書、玩過的遊戲，以及它們悄悄改變我看世界的方式。我不追逐熱門，也不急著給出結論。',
+    '本業是設計師，這是一個我自己設計的來放讀書跟遊戲心得的網站。',
   nowUpdated: '2026-10-01',
   nowHtml:
     '<p>這一頁記錄我現在正在做的事：正在讀的書、正在玩的遊戲，和最近在想的事。</p><p>（範例內容，請到 Studio 的「網站設定」修改。）</p>',

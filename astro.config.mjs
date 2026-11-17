@@ -10,6 +10,12 @@ const dataset = process.env.PUBLIC_SANITY_DATASET || 'production';
 export default defineConfig({
   site: 'https://readgamewrite.com',
   output: 'static',
+  // Old section pages now live inside the All Articles filters.
+  redirects: {
+    '/books': '/articles/?type=books',
+    '/games': '/articles/?type=games',
+    '/now': '/about/',
+  },
   integrations: [
     sanity({
       projectId,

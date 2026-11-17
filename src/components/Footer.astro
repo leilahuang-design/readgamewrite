@@ -6,76 +6,68 @@ interface Props {
   threadsUrl?: string;
 }
 const { instagramUrl, threadsUrl } = Astro.props;
-const links = [
-  instagramUrl && { label: 'Instagram', href: instagramUrl, external: true },
-  threadsUrl && { label: 'Threads', href: threadsUrl, external: true },
-  { label: 'RSS', href: '/rss.xml', external: false },
-].filter(Boolean) as { label: string; href: string; external: boolean }[];
+const internal = [
+  { label: 'Home', href: '/' },
+  { label: 'All Articles', href: '/articles/' },
+  { label: 'About', href: '/about/' },
+];
+const external = [
+  instagramUrl && { label: 'Instagram', href: instagramUrl },
+  threadsUrl && { label: 'Threads', href: threadsUrl },
+].filter(Boolean) as { label: string; href: string }[];
 ---
 
 <footer class="closing">
-  <div class="inner">
-    <hr />
-    <div class="row">
-      <p>© {SITE.year} {SITE.copyrightName}</p>
-      <ul>
-        {
-          links.map((l) => (
-            <li>
-              <a href={l.href} {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                {l.label}
-              </a>
-            </li>
-          ))
-        }
-        <li><a href="#main" data-top>Top</a></li>
-      </ul>
-    </div>
+  <div class="frame row">
+    <p class="copy">© {SITE.year} {SITE.copyrightName}</p>
+    <ul class="links" aria-label="Footer">
+      {internal.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      {external.map((l) => <li><a href={l.href} target="_blank" rel="noopener noreferrer">{l.label}</a></li>)}
+      <li><a href="#main" data-top>Top</a></li>
+    </ul>
   </div>
 </footer>
 
 <style>
   .closing {
-    background: var(--bg);
-  }
-  .inner {
-    padding: 72px var(--pad) 36px;
-    display: flex;
-    flex-direction: column;
-    gap: 48px;
-  }
-  hr {
-    margin: 0;
-    border: 0;
-    border-top: 1px solid var(--line);
+    background: var(--surface-default);
   }
   .row {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 24px;
-    font-size: 11px;
-    color: var(--muted);
+    gap: 20px;
+    padding-block: clamp(32px, calc(32px + (100vw - 390px) * 0.061), 96px);
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: var(--fs-footer);
+    line-height: normal;
   }
-  ul {
+  .copy {
+    color: var(--text-muted);
+  }
+  .links {
     display: flex;
-    gap: 28px;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    gap: 8px 24px;
   }
-  a:hover {
-    color: var(--ink);
+  .links a {
+    color: var(--text-primary);
   }
-  @media (max-width: 640px) {
-    .inner {
-      padding-top: 48px;
-      gap: 32px;
-    }
+  .links a:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  /* ≥ 640px: copyright left, links right (Figma desktop) */
+  @media (min-width: 640px) {
     .row {
-      flex-direction: column;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
     }
-    ul {
-      justify-content: flex-start;
+    .links {
+      justify-content: flex-end;
     }
   }
 </style>

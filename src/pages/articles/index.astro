@@ -6,6 +6,9 @@ import { getArticles } from '../../lib/content';
 const articles = await getArticles();
 ---
 
-<Base title="All Articles" description="Every note on Read, Game, Write – books, games and loose thoughts.">
-  <Archive title="ALL ARTICLES" articles={articles} />
+<Base title="All Articles" description="Every note on Read, Game, And Write – book notes and game reviews.">
+  <header class="frame page-header">
+    <h1 class="page-heading">All Articles</h1>
+  </header>
+  <Archive articles={articles} />
 </Base>
