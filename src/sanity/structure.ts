@@ -3,6 +3,7 @@ import type { StructureResolver } from 'sanity/structure';
 // Left-hand menu in the Studio: Articles list + the single Site Settings doc.
 export const structure: StructureResolver = (S) =>
   S.list()
+    .id('root')
     .title('內容')
     .items([
       S.documentTypeListItem('article').title('文章'),
